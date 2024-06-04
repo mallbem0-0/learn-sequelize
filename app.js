@@ -6,8 +6,14 @@ const nunjucks = require('nunjucks'); // 템플릿 엔진 Nunjucks 사용
 // models 폴더의 sequelize 객체 가져오기
 const { sequelize } = require('./models'); // 폴더내의 index.js 파일은 require할 때 이름 생략 가능
 
+const indexRouter = require('./routes'); // 'routes' 경로에서 index.js 파일을 가져옴
+const usersRouter = require('./routes/users'); // './routes/users' 경로에서 user.js 파일을 가져옴
+const commentsRouter = require('./routes/comments'); // './routes/comments' 경로에서 comments.js 파일을 가져옴
+
+
+
 const app = express(); // Express 애플리케이션 생성
-app.set('port', process.env.PORT || 3001); // 포트 설정
+app.set('port', process.env.PORT || 3002); // 포트 설정
 app.set('view engine', 'html'); // 템플릿 엔진을 HTML로 설정
 
 // nunjucks를 Express에 설정
@@ -37,6 +43,10 @@ app.use(express.json());
 // URL-encoded 형식 요청 본문 파싱을 위한 미들웨어 추가
 app.use(express.urlencoded({ extended: false }));
 
+app.use('/', indexRouter); // 루트 경로('/')에 대한 요청이 오면 indexRouter를 사용하여 요청을 처리함
+app.use('/users', usersRouter); // '/users' 경로에 대한 요청이 오면 usersRouter를 사용하여 요청을 처리함
+app.use('/comments', commentsRouter); // '/comments' 경로에 대한 요청이 오면 commentsRouter를 사용하여 요청을 처리함
+
 // 라우터가 없는 경우 404 에러를 발생시키는 미들웨어 추가
 app.use((req, res, next) => {
     // 요청된 HTTP 메소드와 URL에 대한 에러 메시지 생성
@@ -55,6 +65,16 @@ app.use((err, req, res, next) => {
 });
 
 // Express 애플리케이션을 특정 포트에서 실행
-app.listen(app.length('port'), () => {
+app.listen(app.get('port'), () => {
     console.log(app.get('port'), '번 포트에서 대기 중');
+});
+
+app.get('/', async (req, res) => {
+    try {
+        const users = await User.findAll();
+        res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error); // 더 구체적인 에러 로그
+        res.status(500).send('Internal Server Error');
+    }
 });
